@@ -1,10 +1,11 @@
 """Account polling with independent per-vehicle availability."""
+
 from __future__ import annotations
 
 import asyncio
-from datetime import timedelta
 import logging
 import time
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -22,14 +23,21 @@ class NinebotCoordinator(DataUpdateCoordinator[dict[str, VehicleState]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: NinebotClient) -> None:
         self.client = client
         self.vehicles: dict[str, Vehicle] = {}
-        self._listed_at = 0.0
+        self._listed_at: float | None = None
+        self._active: set[str] = set()
         self.fetched_at: float | None = None
         self._backoff_until = 0.0
         super().__init__(
-            hass, _LOGGER, config_entry=entry, name=DOMAIN,
-            update_interval=timedelta(seconds=entry.options.get(
-                CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL,
-            )),
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=DOMAIN,
+            update_interval=timedelta(
+                seconds=entry.options.get(
+                    CONF_POLL_INTERVAL,
+                    DEFAULT_POLL_INTERVAL,
+                )
+            ),
         )
 
     async def _async_update_data(self) -> dict[str, VehicleState]:
@@ -37,34 +45,41 @@ class NinebotCoordinator(DataUpdateCoordinator[dict[str, VehicleState]]):
         if now < self._backoff_until:
             raise UpdateFailed("Server requested a polling pause")
         try:
-            active = set(self.vehicles)
-            if not self.vehicles or now - self._listed_at >= 3600:
+            active = set(self._active)
+            if self._listed_at is None or now - self._listed_at >= 3600:
                 listed = await self.client.async_list_vehicles()
                 active = {vehicle.sn for vehicle in listed}
                 self.vehicles.update((vehicle.sn, vehicle) for vehicle in listed)
                 self._listed_at = now
-            else:
-                active = set(getattr(self, "_active", self.vehicles))
             self._active = active
             old = self.data or {}
             # Bound both concurrent requests and account pressure for large fleets.
             semaphore = asyncio.Semaphore(3)
+            batch_failure: AuthenticationError | RateLimited | None = None
 
             async def fetch(sn: str) -> tuple[str, VehicleState]:
+                nonlocal batch_failure
                 if sn not in active:
                     return sn, old.get(sn, VehicleState()).unavailable()
                 try:
                     async with semaphore:
-                        state = await self.client.async_vehicle_state(self.vehicles[sn])
+                        if batch_failure is not None:
+                            raise batch_failure
+                        try:
+                            state = await self.client.async_vehicle_state(self.vehicles[sn])
+                        except (AuthenticationError, RateLimited) as err:
+                            batch_failure = err
+                            raise
                     return sn, state
-                except (AuthenticationError, RateLimited):
+                except AuthenticationError, RateLimited:
                     raise
                 except ApiError:
                     return sn, old.get(sn, VehicleState()).unavailable()
 
             # gather(return_exceptions) ensures requests finish before reload/unload.
-            results = await asyncio.gather(*(fetch(sn) for sn in self.vehicles),
-                                           return_exceptions=True)
+            results = await asyncio.gather(
+                *(fetch(sn) for sn in self.vehicles), return_exceptions=True
+            )
             states: dict[str, VehicleState] = {}
             for result in results:
                 if isinstance(result, BaseException):

@@ -13,7 +13,8 @@ business login and vehicle queries on 2026-11-13. Android Passport v6 is used;
 the iOS Passport v3 request encryption is not copied or required.
 
 Static APK inspection confirms Passport success 90000, the /v3/user/refresh
-snake_case fields, the boolean conversion helper and WGS84 input into the App's
+snake_case fields, the boolean conversion helper, total_mileage in km (feature_core_1.json),
+lastupdatetime in seconds, and WGS84 input into the App's
 gps84_To_Gcj02 map conversion. Lock enum and business expiry codes beyond known
 HTTP 401 / SDK 90016 remain unconfirmed. No secret captured material is included.
 

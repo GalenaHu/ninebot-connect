@@ -1,9 +1,10 @@
 """Minimal persisted authentication and projected vehicle data."""
+
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
-import math
 from typing import Any
 
 
@@ -14,26 +15,35 @@ class AccountSession:
     uuid: str
     business_uid: str
     device_id: str
-    expires_at: float | None = None
 
     def __repr__(self) -> str:
         return "AccountSession(<redacted>)"
 
     def to_storage(self) -> dict[str, Any]:
-        return {key: getattr(self, key) for key in (
-            "access_token", "refresh_token", "uuid", "business_uid", "device_id", "expires_at"
-        )}
+        return {
+            key: getattr(self, key)
+            for key in (
+                "access_token",
+                "refresh_token",
+                "uuid",
+                "business_uid",
+                "device_id",
+            )
+        }
 
     @classmethod
     def from_storage(cls, data: dict[str, Any]) -> AccountSession:
         required = ("access_token", "uuid", "business_uid", "device_id")
         if any(not isinstance(data.get(key), str) or not data[key] for key in required):
             raise ValueError("Incomplete saved session")
-        expiry = number(data.get("expires_at"))
-        return cls(access_token=data["access_token"],
-                   refresh_token=data.get("refresh_token") if isinstance(data.get("refresh_token"), str) else "",
-                   uuid=data["uuid"], business_uid=data["business_uid"],
-                   device_id=data["device_id"], expires_at=expiry)
+        refresh = data.get("refresh_token")
+        return cls(
+            access_token=data["access_token"],
+            refresh_token=refresh if isinstance(refresh, str) else "",
+            uuid=data["uuid"],
+            business_uid=data["business_uid"],
+            device_id=data["device_id"],
+        )
 
 
 @dataclass(frozen=True)
@@ -67,7 +77,7 @@ def number(value: Any) -> float | None:
         return None
     try:
         result = float(value)
-    except (ValueError, OverflowError):
+    except ValueError, OverflowError:
         return None
     return result if math.isfinite(result) else None
 
@@ -85,7 +95,7 @@ def timestamp(value: Any) -> datetime | None:
         parsed /= 1000
     try:
         return datetime.fromtimestamp(parsed, UTC)
-    except (ValueError, OverflowError, OSError):
+    except ValueError, OverflowError, OSError:
         return None
 
 
@@ -97,8 +107,13 @@ def project_vehicle_state(data: dict[str, Any]) -> VehicleState:
     distance = number(data.get("precise_estimate_mileage"))
     mileage = number(data.get("total_mileage"))
     lat, lon = number(data.get("latitude")), number(data.get("longitude"))
-    if (lat is None or lon is None or not -90 <= lat <= 90
-            or not -180 <= lon <= 180 or (lat == 0 and lon == 0)):
+    if (
+        lat is None
+        or lon is None
+        or not -90 <= lat <= 90
+        or not -180 <= lon <= 180
+        or (lat == 0 and lon == 0)
+    ):
         lat = lon = None
     return VehicleState(
         battery=battery if battery is not None and 0 <= battery <= 100 else None,
@@ -109,5 +124,6 @@ def project_vehicle_state(data: dict[str, Any]) -> VehicleState:
         mileage_km=mileage if mileage is not None and mileage >= 0 else None,
         reported_at=timestamp(data.get("lastupdatetime")),
         location_at=timestamp(data.get("gnss_time")),
-        latitude=lat, longitude=lon,
+        latitude=lat,
+        longitude=lon,
     )

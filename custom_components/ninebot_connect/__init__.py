@@ -1,5 +1,8 @@
 """九号车联 integration."""
+
 from __future__ import annotations
+
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -7,7 +10,7 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import NinebotClient
-from .const import PLATFORMS
+from .const import CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL, PLATFORMS
 from .coordinator import NinebotCoordinator
 from .models import AccountSession
 
@@ -28,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NinebotConfigEntry) -> b
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    entry.async_on_unload(entry.add_update_listener(async_options_updated))
     return True
 
 
@@ -36,5 +39,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: NinebotConfigEntry) -> 
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: NinebotConfigEntry) -> None:
-    await hass.config_entries.async_reload(entry.entry_id)
+async def async_options_updated(hass: HomeAssistant, entry: NinebotConfigEntry) -> None:
+    interval = timedelta(seconds=entry.options.get(CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL))
+    if entry.runtime_data.update_interval != interval:
+        await hass.config_entries.async_reload(entry.entry_id)

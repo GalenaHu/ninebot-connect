@@ -1,4 +1,5 @@
 """Account polling contracts, including removal and per-car failures."""
+
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -24,10 +25,12 @@ def coordinator(hass):
 
 async def test_per_vehicle_failure_does_not_hide_other_vehicle(hass):
     c = coordinator(hass)
+
     async def state(vehicle):
         if vehicle == CAR_B:
             raise ApiError("Unavailable")
         return VehicleState(battery=93)
+
     c.client.async_vehicle_state.side_effect = state
     result = await c._async_update_data()
     assert result[CAR_A.sn].available and result[CAR_A.sn].battery == 93
@@ -60,4 +63,24 @@ async def test_rate_limit_backoff_prevents_extra_requests(hass):
     for _ in range(2):
         with pytest.raises(UpdateFailed):
             await c._async_update_data()
+    assert c.client.async_list_vehicles.await_count == 1
+
+
+async def test_rate_limit_stops_queued_vehicle_requests_immediately(hass):
+    c = coordinator(hass)
+    c.client.async_list_vehicles.return_value = [
+        Vehicle(f"CAR-{i}", "Synthetic", "Model", "118") for i in range(12)
+    ]
+    c.client.async_vehicle_state.side_effect = RateLimited(300)
+    with pytest.raises(UpdateFailed):
+        await c._async_update_data()
+    # The first synchronous mock failure latches the pause before others start.
+    assert c.client.async_vehicle_state.await_count == 1
+
+
+async def test_successfully_empty_list_is_still_cached_hourly(hass):
+    c = coordinator(hass)
+    c.client.async_list_vehicles.return_value = []
+    assert await c._async_update_data() == {}
+    assert await c._async_update_data() == {}
     assert c.client.async_list_vehicles.await_count == 1

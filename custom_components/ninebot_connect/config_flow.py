@@ -1,10 +1,10 @@
 """Password in, tokens out: HA setup, options and account-bound reauthentication."""
+
 from __future__ import annotations
 
 from typing import Any
 
-import voluptuous as vol
-
+import probatio
 from homeassistant import config_entries
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
@@ -12,17 +12,30 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import (
-    ApiError, AuthenticationError, CannotConnect, NinebotClient, RateLimited, VerificationRequired,
+    ApiError,
+    AuthenticationError,
+    CannotConnect,
+    NinebotClient,
+    RateLimited,
+    VerificationRequired,
 )
 from .const import (
-    CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL, DOMAIN, MAX_POLL_INTERVAL,
-    MIN_POLL_INTERVAL, NAME,
+    CONF_POLL_INTERVAL,
+    DEFAULT_POLL_INTERVAL,
+    DOMAIN,
+    MAX_POLL_INTERVAL,
+    MIN_POLL_INTERVAL,
+    NAME,
 )
 
-CREDENTIALS = vol.Schema({
-    vol.Required(CONF_USERNAME): str,
-    vol.Required(CONF_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
-})
+CREDENTIALS = probatio.Schema(
+    {
+        probatio.Required(probatio.Secret(CONF_USERNAME)): str,
+        probatio.Required(probatio.Secret(CONF_PASSWORD)): TextSelector(
+            TextSelectorConfig(type=TextSelectorType.PASSWORD)
+        ),
+    }
+)
 
 
 class NinebotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -45,7 +58,8 @@ class NinebotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             old_entry = self._get_reauth_entry() if reauth else None
             try:
                 session = await client.async_login(
-                    user_input[CONF_USERNAME].strip(), user_input[CONF_PASSWORD],
+                    user_input[CONF_USERNAME].strip(),
+                    user_input[CONF_PASSWORD],
                     old_entry.data.get("device_id") if old_entry else None,
                 )
                 if old_entry and (
@@ -61,7 +75,8 @@ class NinebotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     await self.async_set_unique_id(session.uuid)
                     if old_entry:
                         return self.async_update_reload_and_abort(
-                            old_entry, data=session.to_storage(),
+                            old_entry,
+                            data=session.to_storage(),
                         )
                     self._abort_if_unique_id_configured()
                     return self.async_create_entry(title=NAME, data=session.to_storage())
@@ -90,8 +105,20 @@ class NinebotOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
-        return self.async_show_form(step_id="init", data_schema=vol.Schema({
-            vol.Required(CONF_POLL_INTERVAL, default=self.config_entry.options.get(
-                CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL,
-            )): vol.All(vol.Coerce(int), vol.Range(min=MIN_POLL_INTERVAL, max=MAX_POLL_INTERVAL)),
-        }))
+        return self.async_show_form(
+            step_id="init",
+            data_schema=probatio.Schema(
+                {
+                    probatio.Required(
+                        CONF_POLL_INTERVAL,
+                        default=self.config_entry.options.get(
+                            CONF_POLL_INTERVAL,
+                            DEFAULT_POLL_INTERVAL,
+                        ),
+                    ): probatio.All(
+                        probatio.Coerce(int),
+                        probatio.Range(min=MIN_POLL_INTERVAL, max=MAX_POLL_INTERVAL),
+                    ),
+                }
+            ),
+        )

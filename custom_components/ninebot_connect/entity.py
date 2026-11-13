@@ -1,4 +1,5 @@
 """Shared HA entity identity, device grouping and vehicle availability."""
+
 from __future__ import annotations
 
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -21,8 +22,10 @@ class NinebotEntity(CoordinatorEntity[NinebotCoordinator]):
         self._attr_unique_id = f"{identity}:{key}"
         vehicle = coordinator.vehicles[sn]
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, identity)}, name=vehicle.name,
-            manufacturer="Segway-Ninebot", model=vehicle.model,
+            identifiers={(DOMAIN, identity)},
+            name=vehicle.name,
+            manufacturer="Segway-Ninebot",
+            model=vehicle.model,
         )
 
     @property

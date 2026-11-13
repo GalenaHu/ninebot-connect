@@ -43,3 +43,7 @@ HA 状态及历史中会含车辆位置和时间；请自行设置 recorder 排�
 参见 `docs/VERIFICATION.md`。源码随包交付，可自行审查 `api.py` 的固定路由、`config_flow.py` 的存储字段与 `models.py` 的响应投影。
 
 加密算法改编自 kxn/ninebot-recon，原代码 MIT 许可保留在组件的 `LICENSE.kxn`，来源固定提交记录在 `PROVENANCE.md`。项目不代表九号或 Home Assistant 官方。
+
+## 本地开发
+
+使用独立的Python3.14虚拟环境安装 `requirements-dev.txt` 后，运行 `python -m pytest`、`ruff check custom_components tests scripts` 和 `mypy custom_components/ninebot_connect`。HTTP测试只启动本机回环服务器。`python scripts/build_release.py` 生成允许列表内的安装包和完整源码包；不会打包工作目录中的抓包、APK或个人验证材料。

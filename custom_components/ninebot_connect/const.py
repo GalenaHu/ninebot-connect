@@ -1,4 +1,5 @@
 """Ninebot Connect constants and verified endpoint policy."""
+
 from homeassistant.const import Platform
 
 DOMAIN = "ninebot_connect"
@@ -18,11 +19,16 @@ BUSINESS_LOGIN_PATH = "/user/user/login"
 LIST_PATH = "/vehicle/binding/my-vehicle"
 DYNAMIC_PATH = "/v6/vehicle/vehicle-dynamic-data"
 STATUS_PATH = "/vehicle/vehicle/vehicle-status"
-ALLOWED_ROUTES = frozenset({
-    (PASSPORT, LOGIN_PATH), (PASSPORT, REFRESH_PATH),
-    (BUSINESS, BUSINESS_LOGIN_PATH), (VEHICLES, LIST_PATH),
-    (VEHICLES, DYNAMIC_PATH), (VEHICLES, STATUS_PATH),
-})
+ALLOWED_ROUTES = frozenset(
+    {
+        (PASSPORT, LOGIN_PATH),
+        (PASSPORT, REFRESH_PATH),
+        (BUSINESS, BUSINESS_LOGIN_PATH),
+        (VEHICLES, LIST_PATH),
+        (VEHICLES, DYNAMIC_PATH),
+        (VEHICLES, STATUS_PATH),
+    }
+)
 CLIENT_VERSION = "610063322"
 CLIENT_KEY = "e177176a-3b3e-1513-e26e-d1123034cb66"
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024

@@ -16,10 +16,10 @@
     kd1..4 = GenKeyData()= randHex(11), randHex(11), randHex(10),
                            randFromCharset(8, 69字符集)（服务器用于响应加密）
 """
+
 import base64
 import hashlib
 import json
-import random
 import secrets
 import struct
 import time
@@ -59,6 +59,7 @@ PLATFORM = 2
 # 基础工具
 # ---------------------------------------------------------------------------
 
+
 def _rol32(v: int, n: int) -> int:
     n %= 32
     return ((v << n) | (v >> (32 - n))) & 0xFFFFFFFF
@@ -80,6 +81,7 @@ def _rand_int(bound: int) -> int:
 # ---------------------------------------------------------------------------
 # 密钥材料生成
 # ---------------------------------------------------------------------------
+
 
 def rand_hex(n: int) -> str:
     return "".join(CHARSET_HEX[_rand_int(16)] for _ in range(n))
@@ -113,6 +115,7 @@ def gen_nonce() -> str:
 # DeriveKey —— 公式经 unicorn 执行二进制机器码验证（11 组测试 ALL PASS）
 # ---------------------------------------------------------------------------
 
+
 def derive_key(a: bytes, b: bytes, c: bytes, d: bytes) -> bytes:
     """DeriveKey(A,B,C,D) -> 16 字节 AES 密钥。
 
@@ -127,7 +130,10 @@ def derive_key(a: bytes, b: bytes, c: bytes, d: bytes) -> bytes:
       out0 = (~((c'|d')^b')&out2)^d'
       key = out0|out1|out2|out3 小端序 16 字节
     """
-    A = _rol8acc(a); B = _rol8acc(b); C = _rol8acc(c); D = _rol8acc(d)
+    A = _rol8acc(a)
+    B = _rol8acc(b)
+    C = _rol8acc(c)
+    D = _rol8acc(d)
     x = A ^ C
     y = B ^ D
     fx = _rol32(x, 8) ^ x ^ _rol32(x, 24)
@@ -148,12 +154,13 @@ def derive_key(a: bytes, b: bytes, c: bytes, d: bytes) -> bytes:
 # AndroidB64 —— 行为经 unicorn 执行二进制机器码验证（9 组测试 ALL PASS）
 # ---------------------------------------------------------------------------
 
+
 def android_b64(data: bytes) -> str:
     """模拟 ninecli 的 AndroidB64：标准 base64，每 76 字符插 \\n，非空时末尾 \\n"""
     b = base64.b64encode(data)
     if not b:
         return ""
-    lines = [b[i:i + 76] for i in range(0, len(b), 76)]
+    lines = [b[i : i + 76] for i in range(0, len(b), 76)]
     return b"\n".join(lines).decode() + "\n"
 
 
@@ -161,20 +168,21 @@ def android_b64(data: bytes) -> str:
 # JSON 转义（jsonEscapeString @0x6cc7a0 行为：标准转义 + 首尾引号）
 # ---------------------------------------------------------------------------
 
+
 def _json_escape(s: str) -> str:
     """模拟二进制 jsonEscapeString：返回带引号的转义字符串"""
     out = ['"']
     for ch in s:
         if ch == '"':
             out.append('\\"')
-        elif ch == '\\':
-            out.append('\\\\')
-        elif ch == '\n':
-            out.append('\\n')
-        elif ch == '\r':
-            out.append('\\r')
-        elif ch == '\t':
-            out.append('\\t')
+        elif ch == "\\":
+            out.append("\\\\")
+        elif ch == "\n":
+            out.append("\\n")
+        elif ch == "\r":
+            out.append("\\r")
+        elif ch == "\t":
+            out.append("\\t")
         else:
             out.append(ch)
     out.append('"')
@@ -185,9 +193,17 @@ def _json_escape(s: str) -> str:
 # 明文 wrapper（BuildWrapper @0x6cc4c0，字段拼接顺序与二进制完全一致）
 # ---------------------------------------------------------------------------
 
-def build_wrapper(data: bytes, kd1: str, kd2: str, kd3: str, kd4: str,
-                  platform: int = PLATFORM, timestamp: int | None = None,
-                  timestamp_seconds: bool = True) -> str:
+
+def build_wrapper(
+    data: bytes,
+    kd1: str,
+    kd2: str,
+    kd3: str,
+    kd4: str,
+    platform: int = PLATFORM,
+    timestamp: int | None = None,
+    timestamp_seconds: bool = True,
+) -> str:
     """business 域 wrapper：platform=2、timeStamp=Unix 秒（GDB 抓包确认）。
 
     timestamp_seconds=False 时使用毫秒（通用层语义，保留兼容）。
@@ -198,13 +214,27 @@ def build_wrapper(data: bytes, kd1: str, kd2: str, kd3: str, kd4: str,
         ts = timestamp
     parts = [
         "{\n",
-        '\t"data" : ', _json_escape(android_b64(data)), ",\n",
-        '\t"keyDataFour" : "', kd4, '",\n',
-        '\t"keyDataOne" : "', kd1, '",\n',
-        '\t"keyDataThree" : "', kd3, '",\n',
-        '\t"keyDataTwo" : "', kd2, '",\n',
-        '\t"platform" : ', str(platform), ",\n",
-        '\t"timeStamp" : ', str(ts), "\n}\n",
+        '\t"data" : ',
+        _json_escape(android_b64(data)),
+        ",\n",
+        '\t"keyDataFour" : "',
+        kd4,
+        '",\n',
+        '\t"keyDataOne" : "',
+        kd1,
+        '",\n',
+        '\t"keyDataThree" : "',
+        kd3,
+        '",\n',
+        '\t"keyDataTwo" : "',
+        kd2,
+        '",\n',
+        '\t"platform" : ',
+        str(platform),
+        ",\n",
+        '\t"timeStamp" : ',
+        str(ts),
+        "\n}\n",
     ]
     return "".join(parts)
 
@@ -213,6 +243,7 @@ def build_wrapper(data: bytes, kd1: str, kd2: str, kd3: str, kd4: str,
 # 内层 JSON（BuildInner @0x6cece0）：Go map + encoding/json（键排序、紧凑、
 # HTMLEscape）+ checkcode 追加。2026-08-07 GDB 抓 446B 输入 100% 复现。
 # ---------------------------------------------------------------------------
+
 
 def _go_json_dumps(d: dict) -> str:
     """精确模拟二进制 EncodeOrderedJSON @0x6cbf00 + writeJSONValue @0x6cc0a0。
@@ -227,15 +258,16 @@ def _go_json_dumps(d: dict) -> str:
     business login / vehicles / travel-list / travel-info 各有固定字段序，
     并非 map 字母序。调用方须按抓包顺序构造 dict。
     """
+
     def _val(v):
         if isinstance(v, str):
-            return _json_escape(v)          # 5 转义 + 首尾引号（与 writeJSONValue 一致）
+            return _json_escape(v)  # 5 转义 + 首尾引号（与 writeJSONValue 一致）
         if isinstance(v, bool):
             return "true" if v else "false"
         if isinstance(v, (int,)):
-            return str(v)                   # 0x48df60 十进制
+            return str(v)  # 0x48df60 十进制
         if isinstance(v, float):
-            return repr(v)                  # 理论差异：二进制用 strconv 'f'，业务无 float
+            return repr(v)  # 理论差异：二进制用 strconv 'f'，业务无 float
         if v is None:
             return "null"
         if isinstance(v, dict):
@@ -243,6 +275,7 @@ def _go_json_dumps(d: dict) -> str:
         if isinstance(v, (list, tuple)):
             return "[" + ",".join(_val(x) for x in v) + "]"
         return _json_escape(str(v))
+
     return "{" + ",".join(_json_escape(str(k)) + ":" + _val(x) for k, x in d.items()) + "}"
 
 
@@ -263,6 +296,7 @@ def build_inner(params: dict) -> str:
 # 加密 / 解密（AES-128-CBC, IV=16 个零字节, PKCS7）
 # ---------------------------------------------------------------------------
 
+
 def _pkcs7_pad(data: bytes, block: int = 16) -> bytes:
     pad = block - (len(data) % block)
     return data + bytes([pad]) * pad
@@ -280,6 +314,7 @@ def _pkcs7_unpad(data: bytes, block: int = 16) -> bytes:
 def _aes_cbc_encrypt(key: bytes, plaintext: bytes) -> bytes:
     """AES-128-CBC, IV = 16×0x00, PKCS7 —— 与二进制 AESEncrypt @0x6ccac0 一致"""
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
     iv = b"\x00" * 16
     enc = Cipher(algorithms.AES(key), modes.CBC(iv)).encryptor()
     return enc.update(_pkcs7_pad(plaintext)) + enc.finalize()
@@ -287,6 +322,7 @@ def _aes_cbc_encrypt(key: bytes, plaintext: bytes) -> bytes:
 
 def _aes_cbc_decrypt(key: bytes, ciphertext: bytes) -> bytes:
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
     iv = b"\x00" * 16
     dec = Cipher(algorithms.AES(key), modes.CBC(iv)).decryptor()
     padded = dec.update(ciphertext) + dec.finalize()
@@ -294,9 +330,12 @@ def _aes_cbc_decrypt(key: bytes, ciphertext: bytes) -> bytes:
 
 
 def _rsa_encrypt(pub_pem: str, data: bytes) -> bytes:
-    from cryptography.hazmat.primitives.asymmetric import padding
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import padding, rsa
+
     pub = serialization.load_pem_public_key(pub_pem.encode())
+    if not isinstance(pub, rsa.RSAPublicKey):
+        raise ValueError("Expected RSA public key")
     return pub.encrypt(data, padding.PKCS1v15())
 
 
@@ -304,12 +343,22 @@ def _rsa_encrypt(pub_pem: str, data: bytes) -> bytes:
 # 请求封装（EncryptRequest @0x6ca000）
 # ---------------------------------------------------------------------------
 
-def encrypt_request(data: bytes, aes_key: bytes, kd1: str, kd2: str, kd3: str, kd4: str,
-                    platform: int = PLATFORM, timestamp: int | None = None,
-                    timestamp_seconds: bool = True) -> dict:
+
+def encrypt_request(
+    data: bytes,
+    aes_key: bytes,
+    kd1: str,
+    kd2: str,
+    kd3: str,
+    kd4: str,
+    platform: int = PLATFORM,
+    timestamp: int | None = None,
+    timestamp_seconds: bool = True,
+) -> dict:
     """生成 wire 请求体 {"d","h","k","p","t"}"""
-    wrapper = build_wrapper(data, kd1, kd2, kd3, kd4, platform, timestamp,
-                            timestamp_seconds).encode()
+    wrapper = build_wrapper(
+        data, kd1, kd2, kd3, kd4, platform, timestamp, timestamp_seconds
+    ).encode()
     d_raw = _aes_cbc_encrypt(aes_key, wrapper)
     h = hashlib.md5(wrapper).hexdigest()
     k_raw = _rsa_encrypt(RSA_PUBLIC_KEY_PEM, aes_key)
@@ -325,6 +374,7 @@ def encrypt_request(data: bytes, aes_key: bytes, kd1: str, kd2: str, kd3: str, k
 # ---------------------------------------------------------------------------
 # 响应解密（DecryptResponse @0x6ca300）
 # ---------------------------------------------------------------------------
+
 
 def decrypt_response(r_b64: str, kd1: str, kd2: str, kd3: str, kd4: str) -> bytes:
     """解 {"r": b64} -> 解密明文 bytes。key = DeriveKey(kd1..kd4)
@@ -353,9 +403,13 @@ def unwrap_response(plain: bytes) -> bytes:
 # 高层便捷函数
 # ---------------------------------------------------------------------------
 
-def build_request(data: bytes, platform: int = PLATFORM,
-                  timestamp: int | None = None, timestamp_seconds: bool = True
-                  ) -> tuple[dict, dict]:
+
+def build_request(
+    data: bytes,
+    platform: int = PLATFORM,
+    timestamp: int | None = None,
+    timestamp_seconds: bool = True,
+) -> tuple[dict, dict]:
     """生成完整请求 + 保留密钥材料（用于解密响应）。
 
     data: 业务 JSON bytes（如 {"wnumber":"...","month":"202607"}）
@@ -363,8 +417,9 @@ def build_request(data: bytes, platform: int = PLATFORM,
     """
     aes_key = gen_kreq()
     kd1, kd2, kd3, kd4 = gen_key_data()
-    body = encrypt_request(data, aes_key, kd1, kd2, kd3, kd4, platform,
-                           timestamp, timestamp_seconds)
+    body = encrypt_request(
+        data, aes_key, kd1, kd2, kd3, kd4, platform, timestamp, timestamp_seconds
+    )
     return body, {"aes_key": aes_key, "kd1": kd1, "kd2": kd2, "kd3": kd3, "kd4": kd4}
 
 
@@ -375,12 +430,12 @@ def decrypt_wire_response(resp_body: dict, secrets: dict) -> bytes:
     b64(r) → AES-CBC 解密(DeriveKey(kd)) → wrapper JSON → data 字段
     AndroidB64 解码 → 业务 JSON bytes
     """
-    plain = decrypt_response(resp_body["r"], secrets["kd1"], secrets["kd2"],
-                             secrets["kd3"], secrets["kd4"])
+    plain = decrypt_response(
+        resp_body["r"], secrets["kd1"], secrets["kd2"], secrets["kd3"], secrets["kd4"]
+    )
     return unwrap_response(plain)
 
 
 # ---------------------------------------------------------------------------
 # 自测（round-trip）
 # ---------------------------------------------------------------------------
-
