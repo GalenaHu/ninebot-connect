@@ -1,0 +1,84 @@
+{
+  "title": "九号车联",
+  "config": {
+    "step": {
+      "user": {
+        "title": "九号车联",
+        "description": "使用中国大陆九号 App 的账号密码登录。密码仅用于本次认证，不会保存；HA 会保存访问令牌和刷新令牌。",
+        "data": {
+          "username": "九号账号",
+          "password": "密码"
+        }
+      },
+      "reauth_confirm": {
+        "title": "重新认证九号车联",
+        "description": "使用中国大陆九号 App 的账号密码登录。密码仅用于本次认证，不会保存；HA 会保存访问令牌和刷新令牌。",
+        "data": {
+          "username": "九号账号",
+          "password": "密码"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "登录未被接受，请检查账号密码。",
+      "cannot_connect": "无法连接九号服务器，请稍后再试。",
+      "rate_limited": "请求过于频繁，请稍后再试。",
+      "verification_required": "需要额外验证，请先在九号 App 完成验证。",
+      "protocol_error": "服务器响应与已验证协议不符。",
+      "wrong_account": "请输入此集成原账号的凭据。"
+    },
+    "abort": {
+      "already_configured": "此九号账号已经配置。",
+      "no_vehicles": "账号下没有可访问的车辆。",
+      "reauth_successful": "重新认证成功。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "poll_interval": "更新间隔（秒）"
+        },
+        "description": "默认120秒，范围30–3600秒。"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "电量"
+      },
+      "range": {
+        "name": "精准预计续航"
+      },
+      "mileage": {
+        "name": "累计里程"
+      },
+      "reported_at": {
+        "name": "车况上报时间"
+      },
+      "location_at": {
+        "name": "定位上报时间"
+      },
+      "fetched_at": {
+        "name": "查询时间"
+      },
+      "lock_status": {
+        "name": "锁状态代码"
+      }
+    },
+    "binary_sensor": {
+      "charging": {
+        "name": "充电"
+      },
+      "main_battery_online": {
+        "name": "主电池在线"
+      }
+    },
+    "device_tracker": {
+      "location": {
+        "name": "位置"
+      }
+    }
+  }
+}

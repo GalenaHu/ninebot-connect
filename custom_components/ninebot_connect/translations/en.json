@@ -1,0 +1,84 @@
+{
+  "title": "Ninebot Connect",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ninebot Connect",
+        "description": "Use your mainland China Ninebot account. Your password is used for this login only; HA stores access and refresh tokens.",
+        "data": {
+          "username": "Ninebot account",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Ninebot Connect",
+        "description": "Use your mainland China Ninebot account. Your password is used for this login only; HA stores access and refresh tokens.",
+        "data": {
+          "username": "Ninebot account",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Login rejected. Check your account and password.",
+      "cannot_connect": "Unable to connect to Ninebot.",
+      "rate_limited": "Rate limited. Please try again later.",
+      "verification_required": "Complete additional verification in the Ninebot app first.",
+      "protocol_error": "Unexpected server response.",
+      "wrong_account": "Use the original account for this integration."
+    },
+    "abort": {
+      "already_configured": "Account already configured.",
+      "no_vehicles": "No accessible vehicles.",
+      "reauth_successful": "Reauthentication successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "poll_interval": "Poll interval (seconds)"
+        },
+        "description": "Default 120 seconds; range 30–3600."
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Battery"
+      },
+      "range": {
+        "name": "Precise estimated range"
+      },
+      "mileage": {
+        "name": "Total mileage"
+      },
+      "reported_at": {
+        "name": "Vehicle report time"
+      },
+      "location_at": {
+        "name": "Location report time"
+      },
+      "fetched_at": {
+        "name": "Fetch time"
+      },
+      "lock_status": {
+        "name": "Lock status code"
+      }
+    },
+    "binary_sensor": {
+      "charging": {
+        "name": "Charging"
+      },
+      "main_battery_online": {
+        "name": "Main battery online"
+      }
+    },
+    "device_tracker": {
+      "location": {
+        "name": "Location"
+      }
+    }
+  }
+}
