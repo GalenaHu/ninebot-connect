@@ -30,5 +30,6 @@ ALLOWED_ROUTES = frozenset(
     }
 )
 CLIENT_VERSION = "610063322"
+# Public SDK client material shared by the official app, not an account secret.
 CLIENT_KEY = "e177176a-3b3e-1513-e26e-d1123034cb66"
 MAX_RESPONSE_BYTES = 4 * 1024 * 1024

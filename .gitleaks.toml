@@ -1,0 +1,14 @@
+title = "Ninebot Connect secret scanning"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Public Android Passport client identifier, verified in the official APK"
+condition = "AND"
+paths = ['''(^|/)custom_components/ninebot_connect/const\.py$''']
+regexTarget = "secret"
+regexes = ['''^e177176a-3b3e-1513-e26e-d1123034cb66$''']

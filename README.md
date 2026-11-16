@@ -4,7 +4,7 @@
 
 ## 安装
 
-1. 解压安装包，将 `custom_components/ninebot_connect` 整个目录放入 HA 配置目录的 `custom_components` 中。
+1. 在本仓库选择「Code → Download ZIP」下载源码并解压，将 `custom_components/ninebot_connect` 整个目录放入 HA 配置目录的 `custom_components` 中；也可使用本地构建的安装包。
 2. 重启 Home Assistant。
 3. 在「设置 → 设备与服务 → 添加集成」搜索「九号车联」（英文界面为 Ninebot Connect）。
 4. 输入与中国大陆九号 App 密码登录时相同的账号和密码。
@@ -40,9 +40,9 @@ HA 状态及历史中会含车辆位置和时间；请自行设置 recorder 排�
 
 ## 协议来源与验证
 
-参见 `docs/VERIFICATION.md`。源码随包交付，可自行审查 `api.py` 的固定路由、`config_flow.py` 的存储字段与 `models.py` 的响应投影。
+参见[验证记录](docs/VERIFICATION.md)。源码随包交付，可自行审查 [api.py](custom_components/ninebot_connect/api.py) 的固定路由、[config_flow.py](custom_components/ninebot_connect/config_flow.py) 的存储字段与 [models.py](custom_components/ninebot_connect/models.py) 的响应投影。
 
-加密算法改编自 kxn/ninebot-recon，原代码 MIT 许可保留在组件的 `LICENSE.kxn`，来源固定提交记录在 `PROVENANCE.md`。项目不代表九号或 Home Assistant 官方。
+加密算法改编自 kxn/ninebot-recon，原代码 MIT 许可保留在组件的 [LICENSE.kxn](custom_components/ninebot_connect/LICENSE.kxn)，来源固定提交记录在 [PROVENANCE.md](custom_components/ninebot_connect/PROVENANCE.md)。项目不代表九号或 Home Assistant 官方。
 
 ## 本地开发
 
