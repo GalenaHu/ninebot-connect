@@ -1,7 +1,7 @@
 {
   "domain": "ninebot_connect",
   "name": "九号车联",
-  "codeowners": [],
+  "codeowners": ["@GalenaHu"],
   "config_flow": true,
   "documentation": "https://github.com/GalenaHu/ninebot-connect",
   "integration_type": "hub",

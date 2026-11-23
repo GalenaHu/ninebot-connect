@@ -4,6 +4,23 @@
 
 ## 安装
 
+### Marketplace / HACS
+
+需要 Home Assistant **2026.11.0 或更新版本**。本仓库可通过链接添加，无需在默认目录中搜索。
+
+1. 打开「设置 → Marketplace」，选择右上角 **Add from link**。
+2. 按提示连接 GitHub，输入 `https://github.com/GalenaHu/ninebot-connect`，选择 **Add**；如果要求选择类型，选择 **Integration**。
+3. 打开「九号车联」并安装。如果 HA 提示需要重启，先重启。
+4. 在「设置 → 设备与服务 → 添加集成」中搜索「九号车联」，输入九号账号密码。
+
+使用仍提供 **Custom repositories** 菜单的 HACS 时，输入相同仓库地址，类型选择 **Integration**，添加后下载安装。HA 版本仍须符合上述最低要求。
+
+也可通过 [My Home Assistant 链接](https://my.home-assistant.io/redirect/hacs_repository/?owner=GalenaHu&repository=ninebot-connect&category=integration) 打开仓库。
+
+官方参考：[添加自定义仓库](https://www.home-assistant.io/integrations/marketplace/#custom-repositories)、[仓库结构](https://contributors.home-assistant.io/marketplace/reference/repository-structure/)。
+
+### 手动安装
+
 1. 在本仓库选择「Code → Download ZIP」下载源码并解压，将 `custom_components/ninebot_connect` 整个目录放入 HA 配置目录的 `custom_components` 中；也可使用本地构建的安装包。
 2. 重启 Home Assistant。
 3. 在「设置 → 设备与服务 → 添加集成」搜索「九号车联」（英文界面为 Ninebot Connect）。
@@ -43,6 +60,8 @@ HA 状态及历史中会含车辆位置和时间；请自行设置 recorder 排�
 参见[验证记录](docs/VERIFICATION.md)。源码随包交付，可自行审查 [api.py](custom_components/ninebot_connect/api.py) 的固定路由、[config_flow.py](custom_components/ninebot_connect/config_flow.py) 的存储字段与 [models.py](custom_components/ninebot_connect/models.py) 的响应投影。
 
 加密算法改编自 kxn/ninebot-recon，原代码 MIT 许可保留在组件的 [LICENSE.kxn](custom_components/ninebot_connect/LICENSE.kxn)，来源固定提交记录在 [PROVENANCE.md](custom_components/ninebot_connect/PROVENANCE.md)。项目不代表九号或 Home Assistant 官方。
+
+项目图标为自制电动车图形，按本仓库 MIT 许可提供，不使用九号或 Home Assistant 官方标识。
 
 ## 本地开发
 

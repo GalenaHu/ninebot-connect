@@ -18,10 +18,12 @@ def build() -> Path:
         p
         for p in COMPONENT.rglob("*")
         if p.is_file()
-        and (p.suffix in {".py", ".json", ".md"} or p.name in {"LICENSE", "LICENSE.kxn"})
+        and (p.suffix in {".py", ".json", ".md", ".png"} or p.name in {"LICENSE", "LICENSE.kxn"})
         and "__pycache__" not in p.parts
     )
-    source += [ROOT / name for name in ("README.md", "LICENSE", "docs/VERIFICATION.md")]
+    source += [
+        ROOT / name for name in ("hacs.json", "README.md", "LICENSE", "docs/VERIFICATION.md")
+    ]
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for item in source:
             archive.write(item, item.relative_to(ROOT))
@@ -34,6 +36,7 @@ def build() -> Path:
             "docs/SPEC.md",
             "docs/REVIEW.md",
             "scripts/build_release.py",
+            "scripts/build_brand.py",
         )
     ] + sorted((ROOT / "tests").glob("*.py"))
     with zipfile.ZipFile(source_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
