@@ -16,6 +16,7 @@ class NinebotEntity(CoordinatorEntity[NinebotCoordinator]):
     def __init__(self, coordinator: NinebotCoordinator, sn: str, key: str) -> None:
         super().__init__(coordinator)
         self.sn = sn
+        self._card_role = key
         session = coordinator.client.session
         assert session is not None
         identity = f"{session.uuid}:{sn}"
@@ -35,3 +36,7 @@ class NinebotEntity(CoordinatorEntity[NinebotCoordinator]):
     @property
     def available(self) -> bool:
         return super().available and self.vehicle_state.available
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return {"ninebot_connect_role": self._card_role}

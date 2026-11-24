@@ -44,6 +44,7 @@ class NinebotTracker(NinebotEntity, TrackerEntity):
     def extra_state_attributes(self) -> dict[str, str | None]:
         time = self.vehicle_state.location_at
         return {
+            **super().extra_state_attributes,
             "location_reported_at": time.isoformat() if time else None,
             "coordinate_system": "WGS84",
         }

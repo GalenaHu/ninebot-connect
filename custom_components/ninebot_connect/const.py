@@ -4,7 +4,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "ninebot_connect"
 NAME = "九号车联"
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.DEVICE_TRACKER]
 DEFAULT_POLL_INTERVAL = 120
 MIN_POLL_INTERVAL = 30

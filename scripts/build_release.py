@@ -18,28 +18,38 @@ def build() -> Path:
         p
         for p in COMPONENT.rglob("*")
         if p.is_file()
-        and (p.suffix in {".py", ".json", ".md", ".png"} or p.name in {"LICENSE", "LICENSE.kxn"})
+        and (
+            p.suffix in {".py", ".json", ".md", ".png"}
+            or p.name in {"LICENSE", "LICENSE.kxn"}
+            or p.relative_to(COMPONENT).as_posix() == "frontend/ninebot-vehicle-card.js"
+        )
         and "__pycache__" not in p.parts
     )
     source += [
-        ROOT / name for name in ("hacs.json", "README.md", "LICENSE", "docs/VERIFICATION.md")
+        ROOT / name
+        for name in ("hacs.json", "README.md", "LICENSE", "docs/VERIFICATION.md", "docs/CARD.md")
     ]
     with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for item in source:
             archive.write(item, item.relative_to(ROOT))
     source_path = OUTPUT / f"ninebot_connect-{VERSION}-source.zip"
-    development = [
-        ROOT / name
-        for name in (
-            "pyproject.toml",
-            "requirements-dev.txt",
-            "docs/SPEC.md",
-            "docs/EXPANSION.md",
-            "docs/REVIEW.md",
-            "scripts/build_release.py",
-            "scripts/build_brand.py",
-        )
-    ] + sorted((ROOT / "tests").glob("*.py"))
+    development = (
+        [
+            ROOT / name
+            for name in (
+                "pyproject.toml",
+                "requirements-dev.txt",
+                "package.json",
+                "docs/SPEC.md",
+                "docs/EXPANSION.md",
+                "docs/REVIEW.md",
+                "scripts/build_release.py",
+                "scripts/build_brand.py",
+            )
+        ]
+        + sorted((ROOT / "tests").glob("*.py"))
+        + sorted((ROOT / "tests" / "frontend").glob("*.mjs"))
+    )
     with zipfile.ZipFile(source_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for item in source + development:
             archive.write(item, item.relative_to(ROOT))

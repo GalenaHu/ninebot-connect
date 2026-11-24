@@ -260,12 +260,13 @@ class NinebotSensor(NinebotEntity, SensorEntity):
         )
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
+    def extra_state_attributes(self) -> dict[str, Any]:
         slot = self.entity_description.slot
         details = self.vehicle_state.battery_details
         if slot is None or details is None or slot >= len(details.packs):
-            return None
+            return super().extra_state_attributes
         return {
+            **super().extra_state_attributes,
             "battery_slot": slot + 1,
             "cycle_count_supported": details.packs[slot].cycle_supported,
         }

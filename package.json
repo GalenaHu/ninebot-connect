@@ -1,0 +1,11 @@
+{
+  "name": "ninebot-connect-development",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:card": "node --test tests/frontend/*.test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

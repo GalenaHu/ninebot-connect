@@ -54,6 +54,36 @@
 - 缺失或不合法数值显示未知，不补零。单车基础查询失败只令该车基础实体不可用；电源或电池详情失败不会隐藏基础电量和GPS。从账号列表消失的车辆保留实体并标为不可用。
 - 不提供远程控车、骑行统计、轨迹归档、AI查询或专用面板。AI预估续航只是服务器返回的现成数值，不调用AI服务。
 
+## 续航便签卡片
+
+**v0.3.0起随集成提供**，不用再添加卡片仓库或安装Mushroom、card-mod。卡片只读取已有HA实体，不保存账号密码、不额外请求九号接口。
+
+1. 更新九号车联后重启Home Assistant，再刷新浏览器或重新打开HA App。
+2. 编辑仪表盘，添加卡片，搜索 **九号车联 · 续航便签**。
+3. 在可视化编辑器中选择车辆。标题默认使用车辆名，可关闭位置或电池详情。
+
+主界面展示大号电量、精准预计续航、独立开机/充电状态、电量条、区域与上报时间。电池详情可展开，支持多槽位；循环次数仅在支持标记明确时显示，接口评分不当作SOH。实体更新不会收起已展开的详情。车况上报超过15分钟会标为较旧，查询时间不会代替上报时间。缺失值显示“—”，不可用另作提示；电源和电池查询的可用性独立。
+
+卡片按所选HA设备及实体的 `ninebot_connect_role` 属性识别数据，允许修改实体名称。多辆车不会按相似名称串用数据。关闭集成的位置选项后不会提供位置实体；关闭卡片的位置开关只隐藏卡片上的位置。
+
+普通Storage资源模式会自动添加或更新此卡片的模块资源，不修改用户仪表盘。若使用YAML资源模式，或资源未自动出现，在仪表盘资源中手动添加：
+
+```yaml
+url: /ninebot_connect/ninebot-vehicle-card.js?v=0.3.0
+type: module
+```
+
+卡片的YAML配置如下；`device_id`使用可视化编辑器选择的HA设备ID：
+
+```yaml
+type: custom:ninebot-vehicle-card
+device_id: YOUR_HOME_ASSISTANT_DEVICE_ID
+show_location: true
+show_details: true
+```
+
+高级配置可通过 `entities` 覆盖单项绑定，例如 `entities: {battery: sensor.your_battery}`；字段名使用实体角色（如battery、range、power_on、charging、battery_1_voltage）。选择另一辆车时，编辑器会清除手动绑定以免沿用旧车数据。若缺少设备/实体注册表信息，也可用显式绑定显示数据。删除集成后，可在仪表盘资源中移除此模块。
+
 ## 认证与故障
 
 登录分为 Passport 认证和车辆业务会话。SDK 确认的刷新请求会在识别到过期响应时执行一次，并更新完整令牌对；失败或刷新后仍被拒绝时，HA 提示重新认证。重新认证必须使用原账号。由于官方 SDK 未提供已核实的令牌有效期字段，插件不猜测有效期。
@@ -81,3 +111,5 @@ v0.2.0的信息范围和自适应刷新参考了 [Wuty-zju/ha_ninebot](https://g
 ## 本地开发
 
 使用独立的Python3.14虚拟环境安装 `requirements-dev.txt` 后，运行 `python -m pytest`、`ruff check custom_components tests scripts` 和 `mypy custom_components/ninebot_connect`。HTTP测试只启动本机回环服务器。`python scripts/build_release.py` 生成允许列表内的安装包和完整源码包；不会打包工作目录中的抓包、APK或个人验证材料。
+
+前端生产文件无需构建或npm依赖。开发者运行浏览器回归时，可安装package.json中的Playwright开发依赖及测试浏览器，再运行 `npm run test:card`；已有Chrome可设置 `NINEBOT_BROWSER_CHANNEL=chrome`。测试仅使用合成HA状态和独立浏览器资料，不访问真实车辆。实施约定见[卡片说明](docs/CARD.md)。

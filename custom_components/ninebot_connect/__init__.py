@@ -6,13 +6,20 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.setup import async_when_setup
 
 from .api import NinebotClient
+from .card import async_setup_card
 from .const import PLATFORMS
 from .coordinator import NinebotCoordinator
 from .models import AccountSession
 
 type NinebotConfigEntry = ConfigEntry[NinebotCoordinator]
+
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    async_when_setup(hass, "http", async_setup_card)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NinebotConfigEntry) -> bool:

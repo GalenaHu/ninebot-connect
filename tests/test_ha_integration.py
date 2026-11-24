@@ -329,6 +329,28 @@ async def test_successful_power_and_battery_stay_visible_when_basic_query_fails(
         assert value("binary_sensor", "power_on") == "unavailable"
 
 
+async def test_card_roles_are_public_nonidentifying_and_include_battery_slots(hass):
+    with client_patches():
+        await setup_flow(hass)
+        await hass.async_block_till_done()
+        roles = {
+            s.attributes.get("ninebot_connect_role"): s
+            for s in hass.states.async_all()
+            if s.attributes.get("ninebot_connect_role")
+        }
+        assert {
+            "battery",
+            "range",
+            "power_on",
+            "charging",
+            "location",
+            "battery_1_cycles",
+        } <= roles.keys()
+        assert roles["battery_1_cycles"].attributes["cycle_count_supported"] is False
+        for role in roles:
+            assert "SYNTHETIC" not in role and "synthetic-account" not in role
+
+
 async def test_saved_tokens_survive_new_ha_instance_and_delete_clears_storage(hass, tmp_path):
     import json
 
