@@ -295,6 +295,40 @@ async def test_battery_slot_entities_and_group_availability(hass):
         assert state("battery_2_voltage").state == "unavailable"
 
 
+async def test_successful_power_and_battery_stay_visible_when_basic_query_fails(hass):
+    from homeassistant.helpers import entity_registry as er
+
+    from custom_components.ninebot_connect.api import ApiError
+
+    with (
+        client_patches(),
+        patch(
+            "custom_components.ninebot_connect.api.NinebotClient.async_vehicle_state",
+            AsyncMock(side_effect=ApiError("Unavailable")),
+        ),
+    ):
+        created = await setup_flow(hass)
+        await hass.async_block_till_done()
+        c = created["result"].runtime_data
+        registry = er.async_get(hass)
+
+        def value(domain, key):
+            entity_id = registry.async_get_entity_id(
+                domain, DOMAIN, f"{SESSION.uuid}:{CAR.sn}:{key}"
+            )
+            return hass.states.get(entity_id).state
+
+        assert value("sensor", "battery") == "unavailable"
+        assert value("sensor", "battery_1_voltage") == "53.2"
+        assert value("binary_sensor", "power_on") == "on"
+        # Removal must still make all three groups unavailable.
+        c.client.async_list_vehicles.return_value = []
+        c._listed_at = 0
+        await c.async_refresh()
+        await hass.async_block_till_done()
+        assert value("binary_sensor", "power_on") == "unavailable"
+
+
 async def test_saved_tokens_survive_new_ha_instance_and_delete_clears_storage(hass, tmp_path):
     import json
 

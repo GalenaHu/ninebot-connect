@@ -69,3 +69,9 @@ class NinebotBinarySensor(NinebotEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         return getattr(self.vehicle_state, self.entity_description.key)
+
+    @property
+    def available(self) -> bool:
+        if self.entity_description.key == "power_on":
+            return self.coordinator.last_update_success and self.vehicle_state.power_available
+        return super().available

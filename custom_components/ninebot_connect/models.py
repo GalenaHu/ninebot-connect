@@ -82,6 +82,7 @@ class VehicleState:
     ai_range_km: float | None = None
     acc_on: bool | None = None
     power_on: bool | None = None
+    power_available: bool = False
     battery_present: bool | None = None
     charging: bool | None = None
     main_battery_online: bool | None = None

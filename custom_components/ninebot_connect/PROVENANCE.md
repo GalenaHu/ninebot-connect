@@ -28,5 +28,6 @@ were checked against Wuty-zju/ha_ninebot (MIT), pinned at
 This project's battery projection and scheduling are independently implemented;
 no ninecli executable or upstream control/history/AI code is included.
 The battery-info POST route on ebike.ninebot.com was present in the user's prior
-authorized App capture. This confirms the route observation, not successful
-replay of that route with this client's profile; see docs/VERIFICATION.md.
+authorized App capture and successfully replayed with this client's profile on
+2026-11-24. The live check exported only allowlisted measurements and request
+phases, without credentials, vehicle identifiers or coordinates; see docs/VERIFICATION.md.

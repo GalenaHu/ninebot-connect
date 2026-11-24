@@ -109,7 +109,9 @@ class NinebotCoordinator(DataUpdateCoordinator[dict[str, VehicleState]]):
                 nonlocal batch_failure
                 if sn not in active:
                     return sn, replace(
-                        old.get(sn, VehicleState()).unavailable(), battery_details_available=False
+                        old.get(sn, VehicleState()).unavailable(),
+                        battery_details_available=False,
+                        power_available=False,
                     )
 
                 def due(group: str) -> bool:
@@ -134,6 +136,7 @@ class NinebotCoordinator(DataUpdateCoordinator[dict[str, VehicleState]]):
                                 state = replace(
                                     basic,
                                     power_on=state.power_on,
+                                    power_available=state.power_available,
                                     fetched_at=datetime.now(UTC),
                                     battery_details=state.battery_details,
                                     battery_details_at=state.battery_details_at,
@@ -149,12 +152,12 @@ class NinebotCoordinator(DataUpdateCoordinator[dict[str, VehicleState]]):
                         if due("power"):
                             try:
                                 power = await self.client.async_power_state(self.vehicles[sn])
-                                state = replace(state, power_on=power)
+                                state = replace(state, power_on=power, power_available=True)
                                 power_updated = True
                             except AuthenticationError, RateLimited:
                                 raise
                             except ApiError:
-                                state = replace(state, power_on=None)
+                                state = replace(state, power_on=None, power_available=False)
                                 self._failed(sn, "power")
                         if basic_updated:
                             before = (previous.acc_on, previous.power_on, previous.charging)
