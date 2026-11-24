@@ -37,9 +37,12 @@
     "step": {
       "init": {
         "data": {
-          "poll_interval": "更新间隔（秒）"
+          "poll_interval": "固定模式更新间隔（秒）",
+          "adaptive_polling": "自动调整刷新速度",
+          "battery_details": "读取电池详情",
+          "show_location": "展示车辆位置"
         },
-        "description": "默认120秒，范围30–3600秒。"
+        "description": "自动模式按每辆车的新鲜上报调速：停车120秒，开机/充电30秒；电池详情独立低频查询。关闭自动模式后使用固定间隔（30–3600秒）。关闭位置展示会停止向HA状态提供坐标，不会删除已有历史。"
       }
     }
   },
@@ -65,6 +68,39 @@
       },
       "lock_status": {
         "name": "锁状态代码"
+      },
+      "estimated_range": {
+        "name": "普通预估续航"
+      },
+      "ai_range": {
+        "name": "AI预估续航"
+      },
+      "service_remaining_days": {
+        "name": "智能服务剩余天数"
+      },
+      "charging_power": {
+        "name": "充电功率"
+      },
+      "backup_battery": {
+        "name": "通信备用电池电量"
+      },
+      "battery_details_at": {
+        "name": "电池详情查询时间"
+      },
+      "pack_voltage": {
+        "name": "电池槽位{slot}电压"
+      },
+      "pack_temperature": {
+        "name": "电池槽位{slot}温度"
+      },
+      "pack_electricity": {
+        "name": "电池槽位{slot}电量"
+      },
+      "pack_cycles": {
+        "name": "电池槽位{slot}循环次数"
+      },
+      "pack_score": {
+        "name": "电池槽位{slot}评分"
       }
     },
     "binary_sensor": {
@@ -73,6 +109,15 @@
       },
       "main_battery_online": {
         "name": "主电池在线"
+      },
+      "power_on": {
+        "name": "整车开机"
+      },
+      "acc_on": {
+        "name": "ACC电门"
+      },
+      "battery_present": {
+        "name": "电池存在"
       }
     },
     "device_tracker": {

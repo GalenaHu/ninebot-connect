@@ -4,7 +4,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "ninebot_connect"
 NAME = "九号车联"
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 PLATFORMS = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.DEVICE_TRACKER]
 DEFAULT_POLL_INTERVAL = 120
 MIN_POLL_INTERVAL = 30
@@ -19,6 +19,10 @@ BUSINESS_LOGIN_PATH = "/user/user/login"
 LIST_PATH = "/vehicle/binding/my-vehicle"
 DYNAMIC_PATH = "/v6/vehicle/vehicle-dynamic-data"
 STATUS_PATH = "/vehicle/vehicle/vehicle-status"
+BATTERY_PATH = "/v6/vehicle/battery-info"
+CONF_ADAPTIVE = "adaptive_polling"
+CONF_BATTERY_DETAILS = "battery_details"
+CONF_SHOW_LOCATION = "show_location"
 ALLOWED_ROUTES = frozenset(
     {
         (PASSPORT, LOGIN_PATH),
@@ -27,6 +31,7 @@ ALLOWED_ROUTES = frozenset(
         (VEHICLES, LIST_PATH),
         (VEHICLES, DYNAMIC_PATH),
         (VEHICLES, STATUS_PATH),
+        (VEHICLES, BATTERY_PATH),
     }
 )
 CLIENT_VERSION = "610063322"

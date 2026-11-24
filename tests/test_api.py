@@ -145,6 +145,24 @@ async def test_dynamic_projection_uses_only_query_route():
     client._query.assert_awaited_once_with(DYNAMIC_PATH, vehicle)
 
 
+async def test_independent_power_and_battery_queries_project_only_display_data():
+    from custom_components.ninebot_connect.const import BATTERY_PATH, STATUS_PATH
+
+    client = NinebotClient(None, SESSION)
+    client._query = AsyncMock(
+        side_effect=[
+            {"power_status": 0, "pwr": 1},
+            {"battery_list": [{"bms_volt": 53.2, "battery_sn": "PRIVATE"}]},
+        ]
+    )
+    vehicle = Vehicle("SN-test", "Test", "Model", "118")
+    assert await client.async_power_state(vehicle) is False
+    details = await client.async_battery_details(vehicle)
+    assert details.packs[0].voltage == 53.2
+    assert "PRIVATE" not in repr(details)
+    assert [c.args[0] for c in client._query.call_args_list] == [STATUS_PATH, BATTERY_PATH]
+
+
 async def test_arbitrary_route_rejected_before_network():
     client = NinebotClient(None)
     with pytest.raises(ApiError, match="Route refused"):

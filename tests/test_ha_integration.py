@@ -7,7 +7,13 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResultType
 
 from custom_components.ninebot_connect.const import DOMAIN
-from custom_components.ninebot_connect.models import AccountSession, Vehicle, VehicleState
+from custom_components.ninebot_connect.models import (
+    AccountSession,
+    BatteryDetails,
+    BatteryPack,
+    Vehicle,
+    VehicleState,
+)
 
 SESSION = AccountSession(
     "synthetic-access",
@@ -24,6 +30,12 @@ def client_patches():
         "custom_components.ninebot_connect.api.NinebotClient",
         async_login=AsyncMock(return_value=SESSION),
         async_list_vehicles=AsyncMock(return_value=[CAR]),
+        async_power_state=AsyncMock(return_value=True),
+        async_battery_details=AsyncMock(
+            return_value=BatteryDetails(
+                packs=(BatteryPack(voltage=53.2, temperature=25, cycle_supported=False),)
+            )
+        ),
         async_vehicle_state=AsyncMock(
             return_value=VehicleState(
                 battery=93,
@@ -166,10 +178,21 @@ async def test_reauth_replaces_tokens_and_reloads(hass):
 
 
 async def test_rotated_token_storage_does_not_reload_entry(hass):
-    with client_patches():
+    from datetime import UTC, datetime
+
+    with (
+        client_patches(),
+        patch(
+            "custom_components.ninebot_connect.api.NinebotClient.async_vehicle_state",
+            AsyncMock(
+                return_value=VehicleState(battery=93, charging=True, reported_at=datetime.now(UTC))
+            ),
+        ),
+    ):
         created = await setup_flow(hass)
         await hass.async_block_till_done()
         entry = created["result"]
+        assert entry.runtime_data.update_interval.total_seconds() == 30
         renewed = AccountSession(
             "new-access", "new-refresh", SESSION.uuid, SESSION.business_uid, SESSION.device_id
         )
@@ -178,6 +201,32 @@ async def test_rotated_token_storage_does_not_reload_entry(hass):
             await hass.async_block_till_done()
             reload.assert_not_awaited()
         assert entry.data == renewed.to_storage()
+
+
+async def test_options_disable_battery_queries_and_location(hass):
+    with client_patches():
+        created = await setup_flow(hass)
+        await hass.async_block_till_done()
+        entry = created["result"]
+        battery_query = entry.runtime_data.client.async_battery_details
+        before = battery_query.await_count
+        result = await hass.config_entries.options.async_init(entry.entry_id)
+        result = await hass.config_entries.options.async_configure(
+            result["flow_id"],
+            {
+                "adaptive_polling": True,
+                "poll_interval": 120,
+                "battery_details": False,
+                "show_location": False,
+            },
+        )
+        await hass.async_block_till_done()
+        assert result["type"] is FlowResultType.CREATE_ENTRY
+        assert battery_query.await_count == before
+        state = entry.runtime_data.data[CAR.sn]
+        assert state.latitude is state.longitude is state.location_at is None
+        trackers = hass.states.async_all("device_tracker")
+        assert all(s.state == "unavailable" and "latitude" not in s.attributes for s in trackers)
 
 
 async def test_options_changes_poll_interval_and_reload(hass):
@@ -191,11 +240,59 @@ async def test_options_changes_poll_interval_and_reload(hass):
             result["flow_id"],
             {
                 "poll_interval": 300,
+                "adaptive_polling": False,
             },
         )
         await hass.async_block_till_done()
         assert result["type"] is FlowResultType.CREATE_ENTRY
         assert entry.runtime_data.update_interval.total_seconds() == 300
+
+
+async def test_battery_slot_entities_and_group_availability(hass):
+    from dataclasses import replace
+
+    from homeassistant.helpers import entity_registry as er
+
+    with client_patches():
+        created = await setup_flow(hass)
+        await hass.async_block_till_done()
+        entry = created["result"]
+        registry = er.async_get(hass)
+
+        def state(key):
+            entity_id = registry.async_get_entity_id(
+                "sensor", DOMAIN, f"{SESSION.uuid}:{CAR.sn}:{key}"
+            )
+            assert entity_id is not None
+            return hass.states.get(entity_id)
+
+        assert state("battery_1_voltage").state == "53.2"
+        assert state("battery_1_cycles").state == "unknown"
+        assert state("battery_1_cycles").attributes["cycle_count_supported"] is False
+        c = entry.runtime_data
+        basic = c.data[CAR.sn]
+        c.async_set_updated_data({CAR.sn: replace(basic, battery_details_available=False)})
+        await hass.async_block_till_done()
+        assert state("battery_1_voltage").state == "unavailable"
+        assert state("battery").state == "93"
+        c.async_set_updated_data(
+            {
+                CAR.sn: replace(
+                    basic,
+                    battery_details=BatteryDetails(
+                        packs=(
+                            BatteryPack(voltage=53),
+                            BatteryPack(voltage=52),
+                        )
+                    ),
+                )
+            }
+        )
+        await hass.async_block_till_done()
+        assert state("battery_2_voltage").state == "52"
+        c.async_set_updated_data({CAR.sn: basic})
+        await hass.async_block_till_done()
+        assert state("battery_2_voltage").state == "unavailable"
 
 
 async def test_saved_tokens_survive_new_ha_instance_and_delete_clears_storage(hass, tmp_path):

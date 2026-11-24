@@ -11,10 +11,12 @@ from cryptography.hazmat.primitives.asymmetric import padding, rsa
 
 from custom_components.ninebot_connect import api, crypto
 from custom_components.ninebot_connect.const import (
+    BATTERY_PATH,
     BUSINESS_LOGIN_PATH,
     DYNAMIC_PATH,
     LIST_PATH,
     LOGIN_PATH,
+    STATUS_PATH,
 )
 
 
@@ -96,6 +98,13 @@ async def test_password_to_encrypted_vehicle_query(aiohttp_server, monkeypatch):
                     "latitude": 39.9,
                     "longitude": 116.4,
                 }
+                if request.path == STATUS_PATH:
+                    data = {"power_status": 0}
+                elif request.path == BATTERY_PATH:
+                    data = {
+                        "battery_list": [{"bms_volt": 53.2, "bat_temp": 25}],
+                        "charging_power": 0,
+                    }
         response = json.dumps(
             {
                 "data": base64.b64encode(
@@ -131,7 +140,14 @@ async def test_password_to_encrypted_vehicle_query(aiohttp_server, monkeypatch):
         )
 
     app = web.Application()
-    for path in (LOGIN_PATH, BUSINESS_LOGIN_PATH, LIST_PATH, DYNAMIC_PATH):
+    for path in (
+        LOGIN_PATH,
+        BUSINESS_LOGIN_PATH,
+        LIST_PATH,
+        DYNAMIC_PATH,
+        STATUS_PATH,
+        BATTERY_PATH,
+    ):
         app.router.add_post(path, gateway)
     server = await aiohttp_server(app)
     host = str(server.make_url("")).rstrip("/")
@@ -147,6 +163,8 @@ async def test_password_to_encrypted_vehicle_query(aiohttp_server, monkeypatch):
                 BUSINESS_LOGIN_PATH,
                 LIST_PATH,
                 DYNAMIC_PATH,
+                STATUS_PATH,
+                BATTERY_PATH,
             )
         ),
     )
@@ -158,6 +176,17 @@ async def test_password_to_encrypted_vehicle_query(aiohttp_server, monkeypatch):
         assert session.uuid == "synthetic-account"
         vehicles = await client.async_list_vehicles()
         state = await client.async_vehicle_state(vehicles[0])
+        assert await client.async_power_state(vehicles[0]) is False
+        details = await client.async_battery_details(vehicles[0])
+        assert details.packs[0].voltage == 53.2
+        assert details.charging_power == 0
     assert (state.battery, state.range_km, state.charging) == (93, 36.7, False)
-    assert observed == [LOGIN_PATH, BUSINESS_LOGIN_PATH, LIST_PATH, DYNAMIC_PATH]
+    assert observed == [
+        LOGIN_PATH,
+        BUSINESS_LOGIN_PATH,
+        LIST_PATH,
+        DYNAMIC_PATH,
+        STATUS_PATH,
+        BATTERY_PATH,
+    ]
     assert "PRIVATE" not in repr(vehicles)

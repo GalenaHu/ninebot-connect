@@ -34,6 +34,7 @@ def build() -> Path:
             "pyproject.toml",
             "requirements-dev.txt",
             "docs/SPEC.md",
+            "docs/EXPANSION.md",
             "docs/REVIEW.md",
             "scripts/build_release.py",
             "scripts/build_brand.py",

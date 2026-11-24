@@ -37,9 +37,12 @@
     "step": {
       "init": {
         "data": {
-          "poll_interval": "Poll interval (seconds)"
+          "poll_interval": "Fixed-mode poll interval (seconds)",
+          "adaptive_polling": "Automatically adjust polling",
+          "battery_details": "Fetch battery details",
+          "show_location": "Show vehicle location"
         },
-        "description": "Default 120 seconds; range 30–3600."
+        "description": "Automatic mode uses fresh vehicle reports: 120 seconds parked, 30 seconds powered on/charging; battery details have a separate slower schedule. Disable automatic mode to use the fixed interval (30–3600 seconds). Hiding location stops publishing coordinates to HA; existing history is retained."
       }
     }
   },
@@ -65,6 +68,39 @@
       },
       "lock_status": {
         "name": "Lock status code"
+      },
+      "estimated_range": {
+        "name": "Estimated range"
+      },
+      "ai_range": {
+        "name": "AI estimated range"
+      },
+      "service_remaining_days": {
+        "name": "Smart service remaining days"
+      },
+      "charging_power": {
+        "name": "Charging power"
+      },
+      "backup_battery": {
+        "name": "Communication backup battery"
+      },
+      "battery_details_at": {
+        "name": "Battery details fetch time"
+      },
+      "pack_voltage": {
+        "name": "Battery slot {slot} voltage"
+      },
+      "pack_temperature": {
+        "name": "Battery slot {slot} temperature"
+      },
+      "pack_electricity": {
+        "name": "Battery slot {slot} level"
+      },
+      "pack_cycles": {
+        "name": "Battery slot {slot} cycle count"
+      },
+      "pack_score": {
+        "name": "Battery slot {slot} score"
       }
     },
     "binary_sensor": {
@@ -73,6 +109,15 @@
       },
       "main_battery_online": {
         "name": "Main battery online"
+      },
+      "power_on": {
+        "name": "Vehicle power"
+      },
+      "acc_on": {
+        "name": "ACC ignition"
+      },
+      "battery_present": {
+        "name": "Battery present"
       }
     },
     "device_tracker": {

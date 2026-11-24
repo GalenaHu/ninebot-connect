@@ -20,7 +20,10 @@ from .api import (
     VerificationRequired,
 )
 from .const import (
+    CONF_ADAPTIVE,
+    CONF_BATTERY_DETAILS,
     CONF_POLL_INTERVAL,
+    CONF_SHOW_LOCATION,
     DEFAULT_POLL_INTERVAL,
     DOMAIN,
     MAX_POLL_INTERVAL,
@@ -79,7 +82,9 @@ class NinebotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             data=session.to_storage(),
                         )
                     self._abort_if_unique_id_configured()
-                    return self.async_create_entry(title=NAME, data=session.to_storage())
+                    return self.async_create_entry(
+                        title=NAME, data=session.to_storage(), options={CONF_ADAPTIVE: True}
+                    )
             except AuthenticationError:
                 errors["base"] = "invalid_auth"
             except CannotConnect:
@@ -104,11 +109,24 @@ class NinebotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class NinebotOptionsFlow(config_entries.OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(
+                title="", data={**self.config_entry.options, **user_input}
+            )
         return self.async_show_form(
             step_id="init",
             data_schema=probatio.Schema(
                 {
+                    probatio.Required(
+                        CONF_ADAPTIVE, default=self.config_entry.options.get(CONF_ADAPTIVE, False)
+                    ): bool,
+                    probatio.Required(
+                        CONF_BATTERY_DETAILS,
+                        default=self.config_entry.options.get(CONF_BATTERY_DETAILS, True),
+                    ): bool,
+                    probatio.Required(
+                        CONF_SHOW_LOCATION,
+                        default=self.config_entry.options.get(CONF_SHOW_LOCATION, True),
+                    ): bool,
                     probatio.Required(
                         CONF_POLL_INTERVAL,
                         default=self.config_entry.options.get(

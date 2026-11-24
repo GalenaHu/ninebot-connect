@@ -13,6 +13,8 @@ from .entity import NinebotEntity
 async def async_setup_entry(
     hass: HomeAssistant, entry: NinebotConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if not entry.runtime_data.show_location:
+        return
     known: set[str] = set()
 
     @callback

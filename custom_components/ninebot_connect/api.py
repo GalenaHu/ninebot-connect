@@ -19,6 +19,7 @@ import aiohttp
 from . import crypto
 from .const import (
     ALLOWED_ROUTES,
+    BATTERY_PATH,
     BUSINESS,
     BUSINESS_LOGIN_PATH,
     CLIENT_KEY,
@@ -29,9 +30,19 @@ from .const import (
     MAX_RESPONSE_BYTES,
     PASSPORT,
     REFRESH_PATH,
+    STATUS_PATH,
     VEHICLES,
 )
-from .models import AccountSession, Vehicle, VehicleState, project_vehicle_state
+from .models import (
+    AccountSession,
+    BatteryDetails,
+    Vehicle,
+    VehicleState,
+    bounded,
+    flag,
+    project_battery_details,
+    project_vehicle_state,
+)
 
 
 class ApiError(Exception):
@@ -389,6 +400,10 @@ class NinebotClient:
                 name if isinstance(name, str) else "九号电动车",
                 model if isinstance(model, str) else "Ninebot",
                 str(kind),
+                int(days)
+                if (days := bounded(item.get("smart_service_surplus_days"), 0, 100000)) is not None
+                and days.is_integer()
+                else None,
             )
         return list(vehicles.values())
 
@@ -397,3 +412,15 @@ class NinebotClient:
         if not isinstance(data, dict):
             raise ApiError("Vehicle state missing")
         return project_vehicle_state(data)
+
+    async def async_power_state(self, vehicle: Vehicle) -> bool | None:
+        data = await self._query(STATUS_PATH, vehicle)
+        if not isinstance(data, dict):
+            raise ApiError("Power state missing")
+        return flag(data.get("power_status"))
+
+    async def async_battery_details(self, vehicle: Vehicle) -> BatteryDetails:
+        data = await self._query(BATTERY_PATH, vehicle)
+        if not isinstance(data, dict):
+            raise ApiError("Battery details missing")
+        return project_battery_details(data)

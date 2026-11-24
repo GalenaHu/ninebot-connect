@@ -21,3 +21,12 @@ HTTP 401 / SDK 90016 remain unconfirmed. No secret captured material is included
 Constants called clientKey and the RSA public key are protocol public client
 material, not the user's account credentials. Personal passwords and tokens
 are never embedded in source.
+
+The v0.2.0 information inventory, cycle-support semantics and adaptive polling idea
+were checked against Wuty-zju/ha_ninebot (MIT), pinned at
+`d1fba4bdc92fbe9f13cf0555d7eca953b8fb5b01`.
+This project's battery projection and scheduling are independently implemented;
+no ninecli executable or upstream control/history/AI code is included.
+The battery-info POST route on ebike.ninebot.com was present in the user's prior
+authorized App capture. This confirms the route observation, not successful
+replay of that route with this client's profile; see docs/VERIFICATION.md.

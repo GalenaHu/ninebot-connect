@@ -15,6 +15,21 @@ from .entity import NinebotEntity
 
 FLAGS = (
     BinarySensorEntityDescription(
+        key="power_on",
+        translation_key="power_on",
+        device_class=BinarySensorDeviceClass.POWER,
+    ),
+    BinarySensorEntityDescription(
+        key="acc_on",
+        translation_key="acc_on",
+        icon="mdi:key-wireless",
+    ),
+    BinarySensorEntityDescription(
+        key="battery_present",
+        translation_key="battery_present",
+        icon="mdi:battery-check",
+    ),
+    BinarySensorEntityDescription(
         key="charging",
         translation_key="charging",
         device_class=BinarySensorDeviceClass.BATTERY_CHARGING,

@@ -55,3 +55,82 @@ def test_session_storage_is_an_allowlist():
     assert AccountSession.from_storage({**session.to_storage(), "password": "secret"}) == session
     assert "password" not in session.to_storage()
     assert "access" not in repr(session)
+
+
+def test_extended_vehicle_fields_have_distinct_meanings():
+    state = project_vehicle_state(
+        {
+            "estimate_mileage": 42.5,
+            "ai_estimate_mileage": 40,
+            "acc_status": 0,
+            "pwr": 1,
+            "battery_exist": 1,
+        },
+        {"power_status": 0},
+    )
+    assert state.estimated_range_km == 42.5
+    assert state.ai_range_km == 40
+    assert state.acc_on is False
+    assert state.power_on is False
+    assert state.main_battery_online is True
+    assert state.battery_present is True
+    # An unknown enum or absent power reply never means off.
+    other = project_vehicle_state({"acc_status": 3, "estimate_mileage": -1})
+    assert other.acc_on is other.power_on is other.estimated_range_km is None
+
+
+def test_battery_details_keep_slot_positions_and_require_cycle_support():
+    from custom_components.ninebot_connect.models import project_battery_details
+
+    details = project_battery_details(
+        {
+            "charging_power": 180,
+            "battery_main": {"electricity": 67},
+            "have_bms_cycle_support": 0,
+            "battery_list": [
+                {
+                    "bms_volt": 53.2,
+                    "bat_temp": 25,
+                    "bms_cycle": 0,
+                    "have_bms_cycle_support": 1,
+                    "score": 98,
+                    "battery_sn": "PRIVATE",
+                },
+                None,
+                {"bms_volt": 999, "bat_temp": "nan"},
+            ],
+        }
+    )
+    assert details.charging_power == 180
+    assert details.backup_battery == 67
+    assert details.packs[0].voltage == 53.2
+    assert details.packs[0].temperature == 25
+    assert details.packs[0].cycle_supported is False
+    assert details.packs[0].cycles is None
+    assert details.packs[0].score == 98
+    assert details.packs[1].voltage is None
+    assert details.packs[2].voltage is details.packs[2].temperature is None
+    assert "PRIVATE" not in repr(details)
+    supported = project_battery_details(
+        {
+            "have_bms_cycle_support": 1,
+            "battery_list": [{"bms_cycle": 37}],
+        }
+    )
+    assert supported.packs[0].cycles == 37
+    unknown = project_battery_details({"battery_list": [{"bms_cycle": 0}]})
+    assert unknown.packs[0].cycles is None
+
+
+def test_boolean_support_flags_and_slot_limit():
+    from custom_components.ninebot_connect.models import project_battery_details
+
+    details = project_battery_details(
+        {
+            "have_bms_cycle_support": True,
+            "battery_list": [{"bms_cycle": 0, "have_bms_cycle_support": "true"}] * 100,
+        }
+    )
+    assert len(details.packs) == 8
+    assert details.packs[0].cycles == 0
+    assert details.packs[0].cycle_supported is True
