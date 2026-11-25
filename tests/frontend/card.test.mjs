@@ -125,6 +125,10 @@ test('visual editor selects only Ninebot devices and emits complete configuratio
     assert.equal(config.title, '我的电动车');
     assert.equal(config.type, 'custom:ninebot-vehicle-card');
     assert.equal(await page.evaluate(() => window.customCards.some(c => c.type === 'ninebot-vehicle-card')), true);
+    await page.evaluate(() => document.querySelector('ninebot-vehicle-card-editor').setConfig({
+      type:'custom:ninebot-vehicle-card',device_id:'temporarily-unloaded-device',
+    }));
+    assert.equal(await page.getByLabel('车辆',{exact:true}).inputValue(),'temporarily-unloaded-device');
   } finally { await page.close(); }
 });
 

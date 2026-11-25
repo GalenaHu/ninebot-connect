@@ -317,7 +317,7 @@
       if (!this._config) return;
       const select = this.shadowRoot.querySelector('select');
       const devices = vehicles(this._hass);
-      const signature = JSON.stringify(devices);
+      const signature = JSON.stringify([devices,this._config.device_id]);
       if (signature !== this._devicesSignature) {
         const placeholder = document.createElement('option'); placeholder.value = ''; placeholder.textContent = '请选择九号车辆';
         const options = devices.map(device => { const option = document.createElement('option'); option.value = device.id; option.textContent = device.name; return option; });

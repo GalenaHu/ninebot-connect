@@ -66,11 +66,21 @@
 
 卡片按所选HA设备及实体的 `ninebot_connect_role` 属性识别数据，允许修改实体名称。多辆车不会按相似名称串用数据。关闭集成的位置选项后不会提供位置实体；关闭卡片的位置开关只隐藏卡片上的位置。
 
-普通Storage资源模式会自动添加或更新此卡片的模块资源，不修改用户仪表盘。若使用YAML资源模式，或资源未自动出现，在仪表盘资源中手动添加：
+普通Storage资源模式会自动添加或更新此卡片的模块资源，不修改用户仪表盘。若资源未自动出现，可在「设置 → 仪表盘 → 资源」手动添加下列地址，类型选择JavaScript模块：
 
 ```yaml
 url: /ninebot_connect/ninebot-vehicle-card.js?v=0.3.0
 type: module
+```
+
+若启用了YAML资源模式，请在已有 `configuration.yaml` 的 `lovelace.resources` 列表中添加此模块，保留其他资源；不要通过只读的资源页面修改。例如：
+
+```yaml
+lovelace:
+  resource_mode: yaml
+  resources:
+    - url: /ninebot_connect/ninebot-vehicle-card.js?v=0.3.0
+      type: module
 ```
 
 卡片的YAML配置如下；`device_id`使用可视化编辑器选择的HA设备ID：
